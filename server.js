@@ -1,54 +1,53 @@
 const express = require('express');
-const { spawn } = require('child_process');
+const { exec } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Serve static files
-app.use(express.static(path.join(__dirname, 'public')));
+// Middleware to serve static files
+app.use(express.static('public'));
 
+// Route to handle video download
 app.get('/download', (req, res) => {
     const videoUrl = req.query.url;
     if (!videoUrl) {
-        return res.status(400).send('No video URL provided');
+        return res.status(400).send('No URL provided.');
     }
 
-    const ytdlpPath = path.join(__dirname, 'yt-dlp.exe');
-    const command = ['-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4', '-o', '-', videoUrl];
+    const outputFileName = 'downloaded_video.mp4';
+    const ytDlpPath = path.resolve(__dirname, 'yt-dlp.exe');
 
-    // Stream video directly to response
-    const ytDlpProcess = spawn(ytdlpPath, command, { stdio: ['pipe', 'pipe', 'inherit'] });
-
-    ytDlpProcess.stdout.on('data', (data) => {
-        res.write(data); // Write data to the response stream
-    });
-
-    ytDlpProcess.stdout.on('end', () => {
-        res.end(); // End the response stream when process ends
-    });
-
-    ytDlpProcess.on('error', (error) => {
-        console.error(`Error executing yt-dlp: ${error.message}`);
-        res.status(500).send('Failed to download video');
-    });
-
-    ytDlpProcess.on('close', (code) => {
-        if (code !== 0) {
-            console.error(`yt-dlp process exited with code ${code}`);
-            res.status(500).send('Failed to download video');
+    // Execute yt-dlp command
+    exec(`"${ytDlpPath}" -f bestvideo+bestaudio --merge-output-format mp4 "${videoUrl}" -o "${outputFileName}"`, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error executing yt-dlp: ${error.message}`);
+            return res.status(500).send('Internal Server Error');
         }
-    });
+        if (stderr) {
+            console.error(`yt-dlp stderr: ${stderr}`);
+        }
+        
+        // Check if the video file exists and send it
+        fs.access(outputFileName, fs.constants.F_OK, (err) => {
+            if (err) {
+                return res.status(500).send('File not found');
+            }
+            
+            res.download(outputFileName, (err) => {
+                if (err) {
+                    console.error(`Download error: ${err.message}`);
+                }
 
-    res.setHeader('Content-Disposition', `attachment; filename="${getOriginalFileName(videoUrl)}.mp4"`);
-    res.setHeader('Content-Type', 'video/mp4');
+                // Clean up the file after sending
+                fs.unlink(outputFileName, (unlinkErr) => {
+                    if (unlinkErr) console.error(`Error deleting file: ${unlinkErr.message}`);
+                });
+            });
+        });
+    });
 });
 
-function getOriginalFileName(url) {
-    // Extract and sanitize the original file name from the URL if possible
-    // This is a placeholder; implement your own logic if needed
-    return 'downloaded_video';
-}
-
 app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+    console.log(`Server running on port ${port}`);
 });
