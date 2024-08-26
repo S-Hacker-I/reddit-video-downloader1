@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reddit Video Downloader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+        .social-icons {
+            margin-bottom: 15px;
+        }
+        .social-icons img {
+            width: 40px;
+            margin: 0 5px;
+        }
+        .input-group {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px 0 0 5px;
+            outline: none;
+        }
+        .input-group button {
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            background-color: #007BFF;
+            color: white;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .input-group button:hover {
+            background-color: #0056b3;
+        }
+        .message {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #007BFF;
+        }
+        .card {
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="social-icons">
+            <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/facebook-new.png" alt="Facebook"></a>
+            <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/twitter.png" alt="Twitter"></a>
+            <a href="#"><img src="https://img.icons8.com/ios-filled/50/000000/instagram-new.png" alt="Instagram"></a>
+        </div>
+
+        <h2>Reddit Video Downloader</h2>
+        <div class="input-group">
+            <input type="text" id="videoUrl" placeholder="Paste Reddit video URL here">
+            <button onclick="downloadVideo()">Download</button>
+        </div>
+        <div class="message" id="message">Enter a URL and click "Download".</div>
+
+        <div class="card">
+            <h3>About Our Reddit Video Downloader</h3>
+            <p>At Trendfy Digital, we offer a powerful tool for downloading Reddit videos quickly and easily. Our Reddit Video Downloader allows you to save videos from Reddit with audio in high quality. Simply paste the video URL, and our tool will handle the rest, providing you with a downloadable file that you can keep for offline viewing.</p>
+
+            <h3>How to Use the Downloader</h3>
+            <p>Using our Reddit Video Downloader is simple:</p>
+            <ol>
+                <li>Copy the URL of the Reddit post.</li>
+                <li>Paste the URL into the input field above and click the "Download" button.</li>
+                <li>Your download will start automatically, and you will be able to save the video to your device.</li>
+            </ol>
+
+            <h3>Why Choose Our Tool?</h3>
+            <p>Our tool is designed with user-friendliness in mind. It supports a variety of video qualities, ensures high-quality downloads, and is optimized for performance. Whether you're looking to save videos for offline use or simply want to keep a copy of your favorite content, our downloader provides a reliable and efficient solution.</p>
+        </div>
+    </div>
+
+    <script>
+        function downloadVideo() {
+            const videoUrl = document.getElementById('videoUrl').value;
+            const messageElem = document.getElementById('message');
+
+            if (!videoUrl) {
+                messageElem.textContent = "Please enter a video URL!";
+                messageElem.style.color = "red";
+                return;
+            }
+
+            messageElem.textContent = "Downloading... Please wait...";
+            messageElem.style.color = "#007BFF";
+
+            // Initiate download process
+            fetch(`/download?url=${encodeURIComponent(videoUrl)}`)
+                .then(response => {
+                    if (response.ok) {
+                        return response.blob();
+                    } else {
+                        throw new Error('Failed to download video');
+                    }
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = "reddit_video.mp4"; // Default fallback name
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+
+                    messageElem.textContent = "Download complete!";
+                    messageElem.style.color = "green";
+                })
+                .catch(error => {
+                    messageElem.textContent = "Failed to download video.";
+                    messageElem.style.color = "red";
+                });
+        }
+    </script>
+
+</body>
+</html>
