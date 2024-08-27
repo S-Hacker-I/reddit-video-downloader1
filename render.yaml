@@ -1,4 +1,9 @@
-build:
-  commands:
-    - apt-get update && apt-get install -y python3-pip
-    - pip3 install yt-dlp
+services:
+  - type: web
+    name: reddit-video-downloader
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.5
