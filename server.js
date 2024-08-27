@@ -16,10 +16,10 @@ app.get('/download', (req, res) => {
     }
 
     const outputFileName = 'downloaded_video.mp4';
-    const ytDlpPath = path.resolve(__dirname, 'yt-dlp.exe');
+    const ytDlpCommand = `yt-dlp -f bestvideo+bestaudio --merge-output-format mp4 "${videoUrl}" -o "${outputFileName}"`;
 
     // Execute yt-dlp command
-    exec(`"${ytDlpPath}" -f bestvideo+bestaudio --merge-output-format mp4 "${videoUrl}" -o "${outputFileName}"`, (error, stdout, stderr) => {
+    exec(ytDlpCommand, (error, stdout, stderr) => {
         if (error) {
             console.error(`Error executing yt-dlp: ${error.message}`);
             return res.status(500).send('Internal Server Error');
